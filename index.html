@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Rise Online</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f5f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 15px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        .task {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: #eef3f8;
+            border-radius: 10px;
+        }
+
+        button {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .complete {
+            background: green;
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>⚡ TASK RISE</h1>
+
+        <div class="card stats">
+            <div>Points: <span id="points">0</span></div>
+            <div>Level: <span id="level">0</span></div>
+        </div>
+
+        <div class="card">
+            <h3>📅 Daily Tasks</h3>
+            <div id="taskList">Loading...</div>
+        </div>
+
+    </div>
+
+    <script>
+        // ----------------------
+        // CONFIG
+        // ----------------------
+        const TASK_URL = "https://yourusername.github.io/tasks.json"; // change later
+        const POINTS_PER_TASK = 2;
+
+        // ----------------------
+        // DATA
+        // ----------------------
+        let tasks = [];
+        let completed = [];
+
+        // ----------------------
+        // LOAD LOCAL DATA
+        // ----------------------
+        function loadLocal() {
+        const data = JSON.parse(localStorage.getItem("taskData"));
+        if (data) {
+        completed = data.completed || [];
+        }
+        }
+
+        // ----------------------
+        // SAVE LOCAL DATA
+        // ----------------------
+        function saveLocal() {
+        localStorage.setItem("taskData", JSON.stringify({
+        completed: completed
+        }));
+        }
+
+        // ----------------------
+        // FETCH TASKS
+        // ----------------------
+        function fetchTasks() {
+        fetch(TASK_URL)
+        .then(res => res.json())
+        .then(data => {
+        tasks = data.tasks;
+        render();
+        })
+        .catch(() => {
+        document.getElementById("taskList").innerHTML =
+        "⚠️ No internet / failed to load tasks";
+        });
+        }
+
+        // ----------------------
+        // CALCULATE
+        // ----------------------
+        function getPoints() {
+        return completed.length * POINTS_PER_TASK;
+        }
+
+        function getLevel(points) {
+        return Math.floor(points / 100); // 100 pts = 1 level
+        }
+
+        // ----------------------
+        // COMPLETE TASK
+        // ----------------------
+        function completeTask(index) {
+        if (!completed.includes(index)) {
+        completed.push(index);
+        saveLocal();
+        render();
+        }
+        }
+
+        // ----------------------
+        // RENDER
+        // ----------------------
+        function render() {
+        const list = document.getElementById("taskList");
+
+        if (!tasks || tasks.length === 0) {
+        list.innerHTML = "No tasks today";
+        return;
+        }
+
+        list.innerHTML = "";
+
+        tasks.forEach((task, i) => {
+        const done = completed.includes(i);
+
+        const div = document.createElement("div");
+        div.className = "task";
+
+        div.innerHTML = `
+        <span>${task}</span>
+        ${
+        done
+        ? "<span>✅</span>"
+        : `<button class="complete" onclick="completeTask(${i})">Done</button>`
+        }
+        `;
+
+        list.appendChild(div);
+        });
+
+        const points = getPoints();
+        const level = getLevel(points);
+
+        document.getElementById("points").innerText = points;
+        document.getElementById("level").innerText = level;
+        }
+
+        // ----------------------
+        // INIT
+        // ----------------------
+        loadLocal();
+        fetchTasks();
+
+    </script>
+
+</body>
+</html>
